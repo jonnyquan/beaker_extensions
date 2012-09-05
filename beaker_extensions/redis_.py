@@ -31,17 +31,17 @@ class RedisManager(NoSqlManager):
         self.db_conn.set(key, pickle.dumps(value))
 
         if expiretime:
-            print "expiretime:%s" % expiretime
+            #print "expiretime:%s" % expiretime
             self.db_conn.expire(key, expiretime)
         else:
-            if type(value)==type([]) and len(value)==3:
+            if type(value)==type(()) and len(value)==3:
                 expiretime=value[1]
-                print "expiretime:%s" % expiretime
-                self.db_conn.expire(key, expiretime)
+            elif 'timeout' in value:
+                expiretime=int(value['timeout'])
             else:
-                #now=datetime.now()
-                #b = now + timedelta(seconds=86400)
-                self.db_conn.expire(key, 86400)
+                expiretime=86400
+            #print "%s::%s,expiretime:%s"%(key,value,expiretime)
+            self.db_conn.expire(key, expiretime)
 
     def __delitem__(self, key):
         key = self._format_key(key)
