@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import logging
 from beaker.exceptions import InvalidCacheBackendError
 
@@ -21,12 +22,26 @@ class RedisManager(NoSqlManager):
         self.db_conn = Redis(host=host, port=int(port), connection_pool=self.connection_pool, **params)
 
     def __contains__(self, key):
-        log.debug('%s contained in redis cache (as %s) : %s'%(key, self._format_key(key), self.db_conn.exists(self._format_key(key))))
+        log.debug('%s contained in redis cache (as %s) : %s' % (
+        key, self._format_key(key), self.db_conn.exists(self._format_key(key))))
         return self.db_conn.exists(self._format_key(key))
 
-    def set_value(self, key, value):
+    def set_value(self, key, value, expiretime=None):
         key = self._format_key(key)
         self.db_conn.set(key, pickle.dumps(value))
+
+        if expiretime:
+            print "expiretime:%s" % expiretime
+            self.db_conn.expire(key, expiretime)
+        else:
+            if type(value)==type([]) and len(value)==3:
+                expiretime=value[1]
+                print "expiretime:%s" % expiretime
+                self.db_conn.expire(key, expiretime)
+            else:
+                #now=datetime.now()
+                #b = now + timedelta(seconds=86400)
+                self.db_conn.expire(key, 86400)
 
     def __delitem__(self, key):
         key = self._format_key(key)
